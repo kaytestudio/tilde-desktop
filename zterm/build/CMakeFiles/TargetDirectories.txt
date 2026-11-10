@@ -1,0 +1,3 @@
+/Users/pedro/Projects/tilde-desktop/zterm/build/CMakeFiles/zterminal.dir
+/Users/pedro/Projects/tilde-desktop/zterm/build/CMakeFiles/edit_cache.dir
+/Users/pedro/Projects/tilde-desktop/zterm/build/CMakeFiles/rebuild_cache.dir

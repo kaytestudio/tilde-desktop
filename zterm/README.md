@@ -5,7 +5,7 @@ A lightweight terminal emulator for macOS Silicon written in ANSI C with full AN
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20Silicon-lightgrey.svg)
 ![Language](https://img.shields.io/badge/language-C11-orange.svg)
-![Version](https://img.shields.io/badge/version-2.0-green.svg)
+![Version](https://img.shields.io/badge/version-3.0-green.svg)
 
 ## Features
 
@@ -18,9 +18,13 @@ A lightweight terminal emulator for macOS Silicon written in ANSI C with full AN
 - 🖱️ Mouse support (selection, scroll wheel, click)
 - 📋 Native macOS clipboard integration (copy/paste)
 - 🗂️ Multiple tabs with independent shell sessions (up to 10)
-- 🔧 INI-style configuration file (`~/.zterminalrc`)
+- 🔧 INI-style configuration file (`~/.config/zterminal/config.ini`)
 - 📜 Scrollback buffer (configurable, default 10,000 lines)
 - 🔍 Incremental search with highlighted matches
+- 🎨 **Theme presets** (solarized-dark, nord, gruvbox, monokai, dracula)
+- 🔄 **Configuration hot-reload** (no restart required)
+- 💾 **Session persistence** (auto-save/restore tabs with working directories)
+- 📡 **Serial port support** (minicom-style, 300-460800 baud)
 - 📦 Built with CMake
 
 ---
@@ -86,7 +90,7 @@ sudo cp zterminal /usr/local/bin/
 zterminal
 ```
 
-On first run, Z-Terminal auto-generates a default configuration file at `~/.zterminalrc`.
+On first run, Z-Terminal auto-generates a default configuration file at `~/.config/zterminal/config.ini`.
 
 ---
 
@@ -96,7 +100,8 @@ On first run, Z-Terminal auto-generates a default configuration file at `~/.zter
 
 | Shortcut | Action |
 |---|---|
-| `Ctrl+T` | New tab |
+| `Ctrl+T` | New shell tab |
+| `Ctrl+M` | New serial port tab (auto-detects first available port) |
 | `Ctrl+W` | Close current tab |
 | `Ctrl+]` | Switch to next tab |
 | `Ctrl+[` | Switch to previous tab |
@@ -158,36 +163,38 @@ neofetch
 
 ## Configuration
 
-Z-Terminal loads its configuration from `~/.zterminalrc` on startup. If the file does not exist, a default one is created automatically.
+Z-Terminal loads its configuration from `~/.config/zterminal/config.ini` on startup. If the file does not exist, a default one is created automatically. **Configuration changes are hot-reloaded** — just save the file and Z-Terminal will apply changes immediately without restart.
 
 ### Full Configuration Reference
 
 ```ini
 # Z-Terminal Configuration File
-# Automatically loaded from ~/.zterminalrc
+# Automatically loaded from ~/.config/zterminal/config.ini
 
-# ─── Appearance ─────────────────────────────
+# ─── Appearance ─────────────────────────────────────
 font_name = Monaco
 font_size = 12
 use_bold = 1
 use_italic = 0
 
-# ─── Colors ─────────────────────────────────
-color_scheme = default
-foreground_color = 7       # 0-15 ANSI color index (7 = white)
-background_color = 0       # 0-15 ANSI color index (0 = black)
+# ─── Theme ──────────────────────────────────────────
+# Available: default, solarized-dark, nord, gruvbox, monokai, dracula
+theme = default
 
-# ─── Behavior ───────────────────────────────
+# ─── Behavior ───────────────────────────────────────
 shell = /bin/zsh           # Shell to launch (defaults to $SHELL)
 scrollback_lines = 10000   # Max scrollback history (up to 50000)
-tab_width = 8              # Tab character width
-bell_enabled = 1           # Audible bell on/off
 
-# ─── Performance ────────────────────────────
+# ─── Sessions ───────────────────────────────────────
+session_dir = ~/.config/zterminal/sessions
+session_auto_save = 1      # Auto-save on exit
+session_auto_restore = 1   # Auto-restore on startup
+
+# ─── Performance ────────────────────────────────────
 refresh_rate_ms = 10       # Render loop interval in milliseconds
 double_click_ms = 500      # Double-click detection window (ms)
 
-# ─── Features ───────────────────────────────
+# ─── Features ───────────────────────────────────────
 mouse_enabled = 1          # Mouse support on/off
 clipboard_enabled = 1      # Clipboard integration on/off
 search_enabled = 1         # Search functionality on/off
@@ -195,15 +202,48 @@ search_enabled = 1         # Search functionality on/off
 
 ### Applying Changes
 
-Configuration is read at startup. To apply changes, restart Z-Terminal:
+Configuration is **hot-reloaded automatically**. Just save the file and changes apply instantly:
 
 ```bash
 # Edit config
-nano ~/.zterminalrc
+nano ~/.config/zterminal/config.ini
 
-# Restart
-./zterminal
+# Changes apply immediately — no restart needed!
 ```
+
+---
+
+
+
+## Serial Port Support (Minicom)
+
+Z-Terminal includes built-in serial port communication for embedded development, Arduino, ESP32, routers, and other serial devices.
+
+### Usage
+
+```bash
+# Press Ctrl+M to open first available serial port at 115200 baud
+# Or use tabs_create_serial() programmatically
+```
+
+### Supported Devices
+
+- USB-to-serial adapters (FTDI, CP210x, CH340, PL2303)
+- Arduino boards
+- ESP32/ESP8266
+- Raspberry Pi serial console
+- Router serial consoles
+- Any `/dev/cu.*` or `/dev/tty.usb*` device on macOS
+
+### Features
+
+- All standard baud rates (300 - 460800)
+- 7/8 data bits
+- None/Odd/Even parity
+- 1/2 stop bits
+- Hardware flow control (RTS/CTS)
+- Auto-discovery of available ports
+- Full terminal features (scrollback, search, clipboard)
 
 ---
 
@@ -217,12 +257,15 @@ zterminal/
     ├── main.c                  # Entry point, event loop, input handling
     ├── terminal.c / .h         # Terminal buffer, ANSI parser, rendering
     ├── pty.c / .h              # PTY creation, read/write, resize
-    ├── tabs.c / .h             # Tab manager (create, switch, close)
+    ├── tabs.c / .h             # Tab manager (shell and serial tabs)
     ├── mouse.c / .h            # Mouse event parsing and text selection
     ├── clipboard.m / .h        # macOS clipboard via Cocoa (Objective-C)
     ├── config.c / .h           # INI config file load/save
     ├── scrollback.c / .h       # Scrollback buffer management
-    └── search.c / .h           # Incremental search and highlighting
+    ├── search.c / .h           # Incremental search and highlighting
+    ├── themes.c / .h           # Color theme presets and OSC sequences
+    ├── session.c / .h          # Tab session persistence
+    └── serial.c / .h           # Serial port communication (minicom)
 ```
 
 ---
@@ -411,13 +454,14 @@ Z-Terminal is designed to be lightweight:
 Contributions are welcome! Remaining areas for improvement:
 
 - [ ] Extended ANSI sequence support (256 colors, 24-bit true color)
-- [ ] Scrollback search navigation (jump scroll position to match)
-- [ ] Double-click word selection
-- [ ] Tab title auto-update from shell escape sequences
-- [ ] Persistent session save/restore
+- [x] Scrollback search navigation (jump scroll position to match)
+- [x] Double-click word selection
+- [x] Tab title auto-update from shell escape sequences
+- [x] Persistent session save/restore
 - [ ] Split panes (horizontal / vertical)
-- [ ] Theme presets (solarized, nord, gruvbox, etc.)
-- [ ] Configuration hot-reload (no restart required)
+- [x] Theme presets (solarized, nord, gruvbox, monokai, dracula)
+- [x] Configuration hot-reload (no restart required)
+- [x] Serial port support (minicom-style)
 
 ---
 

@@ -1,0 +1,2 @@
+# Hashes of file build rules.
+84ab04c43c1c3e9d7ae60b995cb7d5c7 clipboard.o
