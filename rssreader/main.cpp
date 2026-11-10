@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     QApplication app(argc, argv);
     QApplication::setApplicationName(u"RSS Reader"_s);
     QApplication::setApplicationVersion(QStringLiteral(APP_VERSION));
-    RSSListing rsslisting(u"https://www.qt.io/blog/rss.xml"_s);
+    RSSListing rsslisting(u"https://kaytestudio.github.io/blog/rss.xml"_s);
     rsslisting.show();
     return app.exec();
 }
